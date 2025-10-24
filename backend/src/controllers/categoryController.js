@@ -1,4 +1,5 @@
 const Category = require("../model/categoryModel");
+const Expense = require("../model/expenseModel");
 
 // Create a category
 const createCategory = async (req, res, next) => {
@@ -35,10 +36,25 @@ const getAllCategories = async (req, res, next) => {
       return res.status(404).json({ ok: false, error: "No categories found" });
     }
 
+    const categoriesWithTotal = await Promise.all(
+      categories.map(async (category) => {
+        const expenses = await Expense.find({ categoryId: category._id });
+        const totalAmount = expenses.reduce(
+          (sum, expense) => sum + expense.amount,
+          0
+        );
+
+        return {
+          ...category.toObject(),
+          totalAmount,
+        };
+      })
+    );
+
     return res.status(200).json({
       ok: true,
-      data: categories,
-      results: categories.length,
+      data: categoriesWithTotal,
+      results: categoriesWithTotal.length,
     });
   } catch (err) {
     return res.status(400).json({ ok: false, error: err.message });
