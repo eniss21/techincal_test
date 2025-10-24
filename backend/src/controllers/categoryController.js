@@ -110,10 +110,14 @@ const updateCategory = async (req, res, next) => {
 // Delete category
 const deleteCategory = async (req, res, next) => {
   try {
-    const category = await Category.findByIdAndDelete(req.params.id);
+    const category = await Category.findById(req.params.id);
     if (!category) {
       return res.status(404).json({ ok: false, error: "Category not found" });
     }
+
+    await Expense.deleteMany({ categoryId: req.params.id });
+
+    await Category.findByIdAndDelete(req.params.id);
 
     return res.status(204).json({ ok: true, data: null });
   } catch (err) {
