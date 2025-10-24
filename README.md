@@ -20,9 +20,6 @@ npm install
 3. Configure environment variables:
    - Copy `config.env.example` to `config.env`
    - Update the following variables
-
-**Note:** A fully configured `config.env.example` file with working credentials is included in the project for immediate testing.
-
 ```env
 PORT=8000
 DB_PASSWORD=your_mongodb_password
@@ -66,6 +63,8 @@ npm start
 The frontend will run on `http://localhost:3000`
 
 ## Email Service Setup (Brevo)
+
+NOTE: Check spam if your are not getting the email
 
 ### Why Brevo?
 
