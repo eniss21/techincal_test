@@ -3,7 +3,7 @@ const { sendExpenseEmail } = require("../services/emailService");
 
 // Helper function to check if total expenses exceed threshold
 const checkAndNotifyThreshold = async (previousTotal, newTotal) => {
-  const THRESHOLD = 1000;
+  const THRESHOLD = Number(process.env.EXPENSE_THRESHOLD) || 1000;
 
   if (previousTotal <= THRESHOLD && newTotal > THRESHOLD) {
     const recipientEmail =
