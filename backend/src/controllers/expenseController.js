@@ -92,13 +92,11 @@ const getExpensesByCategoryId = async (req, res, next) => {
 // Update an expense
 const updateExpense = async (req, res, next) => {
   try {
-    // Get the old expense to calculate the difference
     const oldExpense = await Expense.findById(req.params.id);
     if (!oldExpense) {
       return res.status(404).json({ ok: false, error: "Expense not found" });
     }
 
-    // Calculate total before update
     const expenses = await Expense.find();
     const previousTotal = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
@@ -111,10 +109,8 @@ const updateExpense = async (req, res, next) => {
       return res.status(404).json({ ok: false, error: "Expense not found" });
     }
 
-    // Calculate new total (subtract old amount, add new amount)
     const newTotal = previousTotal - oldExpense.amount + expense.amount;
 
-    // Check if threshold is crossed and send email if needed
     await checkAndNotifyThreshold(previousTotal, newTotal);
 
     return res.status(200).json({ ok: true, data: expense });
