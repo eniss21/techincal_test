@@ -1,10 +1,30 @@
 const Expense = require("../model/expenseModel");
-const Category = require("../model/categoryModel");
+const { sendExpenseEmail } = require("../services/emailService");
+
+// Helper function to check if total expenses exceed threshold
+const checkAndNotifyThreshold = async (previousTotal, newTotal) => {
+  const THRESHOLD = 1000;
+
+  if (previousTotal <= THRESHOLD && newTotal > THRESHOLD) {
+    const recipientEmail =
+      process.env.NOTIFICATION_EMAIL || "admin@example.com";
+    const recipientName = process.env.NOTIFICATION_NAME || "Admin";
+
+    await sendExpenseEmail(newTotal, recipientEmail, recipientName);
+  }
+};
 
 // Create a new expense
 const createExpense = async (req, res, next) => {
   try {
+    const expenses = await Expense.find();
+    const previousTotal = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
     const expense = await Expense.create(req.body);
+    const newTotal = previousTotal + expense.amount;
+
+    await checkAndNotifyThreshold(previousTotal, newTotal);
+
     return res.status(201).json({ ok: true, data: expense });
   } catch (err) {
     // Handle validation errors
@@ -72,6 +92,16 @@ const getExpensesByCategoryId = async (req, res, next) => {
 // Update an expense
 const updateExpense = async (req, res, next) => {
   try {
+    // Get the old expense to calculate the difference
+    const oldExpense = await Expense.findById(req.params.id);
+    if (!oldExpense) {
+      return res.status(404).json({ ok: false, error: "Expense not found" });
+    }
+
+    // Calculate total before update
+    const expenses = await Expense.find();
+    const previousTotal = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
     const expense = await Expense.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -80,6 +110,12 @@ const updateExpense = async (req, res, next) => {
     if (!expense) {
       return res.status(404).json({ ok: false, error: "Expense not found" });
     }
+
+    // Calculate new total (subtract old amount, add new amount)
+    const newTotal = previousTotal - oldExpense.amount + expense.amount;
+
+    // Check if threshold is crossed and send email if needed
+    await checkAndNotifyThreshold(previousTotal, newTotal);
 
     return res.status(200).json({ ok: true, data: expense });
   } catch (err) {
